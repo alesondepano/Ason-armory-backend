@@ -19,6 +19,7 @@ const allowedOrigins = process.env.CORS_ORIGIN
       "http://127.0.0.1:3000",
       "http://127.0.0.1:5173",
       "https://ason-armory-frontend-wnvm.vercel.app",
+      "https://ason-armory-frontend.vercel.app"
     ];
 
 /**
