@@ -4,64 +4,53 @@ const path = require("path");
 const products = require("./data/products");
 
 const app = express();
-const PORT = process.env.PORT || 5000; // ✅ Use Render's PORT env var
+const PORT = process.env.PORT || 5000;
 
 /**
- * ✅ SAFE CORS CONFIG - Updated for Production
+ * ✅ ALLOWED ORIGINS (FIXED)
  */
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim()) // ✅ Trim spaces from env var
+  ? process.env.CORS_ORIGIN.split(",").map((origin) =>
+      origin.trim().replace(/\/$/, "")
+    )
   : [
-      // Local Development
       "http://localhost:3000",
       "http://localhost:5173",
       "http://localhost:4173",
       "http://127.0.0.1:3000",
       "http://127.0.0.1:5173",
       "http://127.0.0.1:4173",
-      // ✅ Production Frontend (Vercel)
-      "https://ason-amory-frontend-wnvm.vercel.app",
-      "https://ason-amory-frontend-wnvm.vercel.app/", // With trailing slash (just in case)
+
+      // ✅ FIXED: correct spelling (armory, not amory)
+      "https://ason-armory-frontend-wnvm.vercel.app",
     ];
 
+/**
+ * ✅ CLEAN CORS CONFIG (SIMPLIFIED + WORKING)
+ */
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (mobile, curl, etc.)
+    origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      
-      // ✅ Normalize: remove trailing slash AND trim spaces
+
       const cleanOrigin = origin.trim().replace(/\/$/, "");
-      
-      const allowed = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:4173",
-        "https://ason-amory-frontend-wnvm.vercel.app"
-      ].map(o => o.trim().replace(/\/$/, ""));
-      
-      if (allowed.includes(cleanOrigin)) {
-        console.log(`✅ CORS allowed: ${origin}`);
-        return callback(null, true);
+
+      if (allowedOrigins.includes(cleanOrigin)) {
+        console.log(`✅ CORS allowed: ${cleanOrigin}`);
+        callback(null, true);
+      } else {
+        console.warn(`❌ CORS blocked: ${cleanOrigin}`);
+        callback(new Error("Not allowed by CORS"));
       }
-      
-      console.warn(`❌ CORS blocked: "${origin}"`);
-      return callback(new Error("CORS policy"), false);
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
 
 app.use(express.json());
 
 /**
- * ✅ SERVE PRODUCT IMAGES
- * Folder structure:
- * ecommerce-backend/
- * └── public/
- *     └── assets/
+ * ✅ SERVE STATIC IMAGES
  */
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
@@ -91,12 +80,9 @@ app.get("/api/products/:id", (req, res) => {
  * ✅ HEALTH CHECK
  */
 app.get("/", (req, res) => {
-  res.json({ 
+  res.json({
     message: "Ason Armory API is running 🎯",
-    cors: {
-      enabled: true,
-      allowedOrigins: allowedOrigins.filter((o) => !o.includes("localhost")) // Hide localhost in prod logs
-    }
+    status: "OK",
   });
 });
 
@@ -105,7 +91,5 @@ app.get("/", (req, res) => {
  */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
-  console.log(`📦 Products API: /api/products`);
-  console.log(`🖼️  Images served from: /assets`);
-  console.log(`🔓 CORS enabled for ${allowedOrigins.length} origins`);
+  console.log(`📦 API: /api/products`);
 });
