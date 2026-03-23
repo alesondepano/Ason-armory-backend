@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 /**
- * ✅ ALLOWED ORIGINS (FIXED)
+ * ✅ ALLOWED ORIGINS
  */
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((origin) =>
@@ -16,25 +16,20 @@ const allowedOrigins = process.env.CORS_ORIGIN
   : [
       "http://localhost:3000",
       "http://localhost:5173",
-      "http://localhost:4173",
       "http://127.0.0.1:3000",
       "http://127.0.0.1:5173",
-      "http://127.0.0.1:4173",
-
-      // ✅ FIXED: correct spelling (armory, not amory)
       "https://ason-armory-frontend-wnvm.vercel.app",
     ];
 
 /**
- * ✅ CLEAN CORS CONFIG (SIMPLIFIED + WORKING)
+ * ✅ CORS CONFIG
  */
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
+      if (!origin) return callback(null, true); // allow non-browser requests (like Postman)
 
       const cleanOrigin = origin.trim().replace(/\/$/, "");
-
       if (allowedOrigins.includes(cleanOrigin)) {
         console.log(`✅ CORS allowed: ${cleanOrigin}`);
         callback(null, true);
@@ -57,22 +52,22 @@ app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 /**
  * ✅ API ROUTES
  */
-app.get("/api/products", (req, res) => {
+
+// Fetch all products
+app.get("/products", (req, res) => {
   res.json(products);
 });
 
-app.get("/api/categories", (req, res) => {
+// Fetch all categories
+app.get("/categories", (req, res) => {
   const categories = ["All", ...new Set(products.map((p) => p.category))];
   res.json(categories);
 });
 
-app.get("/api/products/:id", (req, res) => {
+// Fetch single product by ID
+app.get("/products/:id", (req, res) => {
   const product = products.find((p) => p.id === Number(req.params.id));
-
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
-  }
-
+  if (!product) return res.status(404).json({ message: "Product not found" });
   res.json(product);
 });
 
@@ -80,10 +75,7 @@ app.get("/api/products/:id", (req, res) => {
  * ✅ HEALTH CHECK
  */
 app.get("/", (req, res) => {
-  res.json({
-    message: "Ason Armory API is running 🎯",
-    status: "OK",
-  });
+  res.json({ message: "Ason Armory API is running 🎯", status: "OK" });
 });
 
 /**
@@ -91,5 +83,5 @@ app.get("/", (req, res) => {
  */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
-  console.log(`📦 API: /api/products`);
+  console.log(`📦 API: /products`);
 });
